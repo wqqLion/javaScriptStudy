@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script type="text/javascript">
+		var Person = {
+			name:'default name',
+			getName:function(){
+				return this.name;
+			}
+		}
+		var reader = clone(Person);
+		var oldName = reader.getName();
+		reader.name = 'JoJo';
+		var newName = reader.getName();
+		console.log(oldName)
+		console.log(newName)
+		function clone(object){
+			function F(){};
+			F.prototype = object;
+			return new F;
+		}
+	</script>
+</html>

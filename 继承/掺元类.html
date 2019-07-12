@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script type="text/javascript">
+		// 掺元类可以把一个函数通过扩充的方式让很多类共享该函数
+		var Mixin = function() {};
+		Mixin.prototype = {
+			serialize: function() {
+				var output = [];
+				for (key in this) {
+					output.push(key + ':' + this[key]);
+				}
+				return output.join(',');
+			}
+		}
+		//Mixin 的 serialize 可能很多类都用的到,但是没必要 让这些类都继承 Mixin
+		// 可以使用augment 函数把这个方法添加到每一个需要的地方
+		function Author(name, books) {
+			this.name = name;
+			this.books = books;
+		}
+
+		augment(Author, Mixin);
+		var author = new Author('唐三', '舞动星空');
+		var result = author.serialize();
+		console.log(result)
+
+		function augment(child, parent) {
+			//如果只想要  parent 中一部分方法
+			if (arguments[2]) {
+				for (var i = 2; i < arguments.length; i++) {
+					if(parent.prototype[arguments[i]]){
+						child.prototype[arguments[i]] = parent.prototype[arguments[i]];
+					}
+				}
+			} else {
+				for (key in parent.prototype) {
+					if (!child.prototype[key]) {
+						child.prototype[key] = parent.prototype[key];
+					}
+				}
+			}
+
+		};
+	</script>
+</html>

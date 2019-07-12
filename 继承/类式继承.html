@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script type="text/javascript">
+		//创建 person 类
+		function Person(name){
+			this.name = name;
+		}
+		Person.prototype.getName = function(){
+			return this.name;
+		}
+		//实例化 person 类
+		var reader = new Person('Test');
+		var readerName = reader.getName();
+		
+		//创建作者类 继承 Person
+		function Author(name,books){
+			Person.call(this,name);
+			this.books = books;
+		}
+		Author.prototype = new Person();
+		Author.prototype.constructor = Author;
+		Author.prototype.getBooks = function(){
+			return this.books;
+		}
+		// 实例化作者类
+		var authorTs = new Author('唐家三少','斗罗大陆');
+		var authorName = authorTs.getName();
+		var authorBooks = authorTs.getBooks();
+		console.log(authorName+':'+authorBooks)
+		
+		function extend(child,parent){
+			var F = function(){};
+			F.prototype = parent.prototype;
+			child.prototype = new F();
+			child.prototype.constructor = child;
+			child.parent = parent.prototype;
+			if(parent.prototype.constructor == Object.prototype.constructor){
+				parent.prototype.constructor = parent;
+			}
+		}
+		
+		//创建 police 类
+		function Police(name){
+			// Person.call(this,name);
+			Police.parent.constructor.call(this.name);//同 Person.call(this,name); 解耦合
+			
+		}
+		//继承 Person
+		extend(Police,Person);
+		var qiLin = new Police('琪琳');
+		var name = qiLin.getName();
+		console.log(name)
+	</script>
+</html>

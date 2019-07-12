@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script type="text/javascript">
+		// 抽像类
+		var BicycleShop = function(){};
+		BicycleShop.prototype={
+			sellBicyle:function(model){
+				var bicyle = this.createBicyle(model);
+				bicyle.assemble();
+				bicyle.wash();
+				
+				return bicyle;
+			},
+			createBicyle:function(model){
+				throw new Error('Unsupported operation on an abstract class');
+			}
+		}
+		
+		function extend(child,parent){
+			var F = function(){};
+			F.prototype = parent.prototype;
+			child.prototype = new F();
+			child.prototype.constructor = child;
+			child.parent = parent.prototype;
+			if(parent.prototype.constructor == Object.prototype.constructor){
+				parent.prototype.constructor = parent;
+			}
+		}
+		
+		//子类
+		var AmBicyleShop = function(){};
+		extend(AmBicyleShop,BicycleShop);
+		AmBicyleShop.prototype.createBicyle = function(model){
+			var bicyle;
+			switch(model){
+				case 'The Speedster':
+				bicyle = new AcmeSpeedster();
+				break;
+				case 'The Lowrider':
+				bicyle = new AcmeLorider();
+				break;
+				case 'The Flatlander':
+				bicyle = new AcmeFlatlander();
+				break;
+				case 'The Comfort Cruiser':
+				default:
+				bicyle = new AcmeComfortCruiser();
+			}
+			return bicyle;
+		}
+	</script>
+</html>

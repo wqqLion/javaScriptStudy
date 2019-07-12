@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script type="text/javascript">
+		var Book = (function(isbn,title,author){
+			//私有变量 
+			var numOfBooks = 0;
+			//私有方法
+			function checkIson(isbn){
+				if(isbn == undefined || typeof isbn != 'string'){
+					return false
+				}
+				return true;
+			}
+			
+			return function(newIsbn,newTitle,newAuthor){
+				var isbn=null;
+				var title=null;
+				var author=null;
+				this.setIsbn=function(newIsbn){
+					if(!checkIson(newIsbn)){
+						throw new Error('isbn Invalid');
+					}
+					isbn = newIsbn;
+				};
+				this.getIsbn=function(){
+					return isbn;
+				};
+				this.getTitle=function(){
+					return title;
+				};
+				this.setTitle=function(newTitle){
+					title = newTitle || 'No title';
+				};
+				this.getAuthor=function(){
+					return author;
+				};
+				this.setAuthor=function(newAuthor){
+					author = newAuthor || 'No author';
+				}
+				numOfBooks++;
+				if(numOfBooks>50){
+					throw new Error('book max nums 50');
+				}
+				this.setIsbn(newIsbn);
+				this.setTitle(newTitle);
+				this.setAuthor(newAuthor);
+			}
+		})();
+		Book.prototype = {
+			display:function(){},
+			checkIson:function(isbn){
+				if(isbn == undefined || typeof isbn != 'string'){
+					return false
+				}
+				return true;
+			},
+			
+		}
+		var testBook = new Book('isbnisbn','titletitle','authorauthor');
+	</script>
+</html>
