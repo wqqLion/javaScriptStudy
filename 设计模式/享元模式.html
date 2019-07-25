@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script>
+		var Car = function(make,model,year){
+			this.make = make;
+			this.model = model;
+			this.year = year;
+		}
+		Car.prototype= function(){
+			getMake :function(){
+				return this.make;
+			},
+			getModel:function(){
+				return this.model;
+			},
+			getYear:function(){
+				return this.year;
+			}
+		}
+		// 如果 car 已经存在  直接返回 car  没有则创建
+		var CarFactory = (function(){
+			var createdCars = {};
+			return {
+				createCar:function(make,model,yeaar){
+					if(createdCars[make+'-'+model+'-'+year]){
+						return createdCars[make+'-'+model+'-'+year];
+					}else{
+						var car = new Car(make,model,year);
+						createdCars[make+'-'+model+'-'+year];
+						return car;
+					}
+				}
+			}
+		})();
+		
+		var CarRecordManager = (function(){
+			var carRecordManager = {};
+			return {
+				addCarRecord:function(make,model,year,owner,tag,renewDate){
+					var car = CarFactory.createCar(make,model,year);
+					carRecordManager[tag] = {
+						owner:owner,
+						renewDate:renewDate,
+						car:car
+					}
+				},
+				transferOwnership:function(tag,newOwner,newTag,newRenewDate){
+					var record = carRecordManager[tag];
+					record.owner = newOwner;
+					record.tag = newTag;
+					record.renewDate = newRenewDate;
+				},
+				renewRegistration:function(tag,newRenewDate){
+					carRecordManager[tag].renewDate = newRenewDate;
+				},
+				isRegistrationCurrent:function(tag){
+					var tody = new Date();
+					return tody.getTime() < Date.parse(carRecordManager[tag].renewDate);
+				}
+			}
+		})();
+	</script>
+</html>

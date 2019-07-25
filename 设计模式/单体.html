@@ -8,16 +8,17 @@
 	</body>
 	<script type="text/javascript">
 		// 单体是javascript中最基本但是又是最有用的模式之一
-		// 它可以将代码组织为一个逻辑单元
+		// 它可以将代码组织为一个逻辑单元,这个逻辑单元的代码可以通过单一的变量进行访问
+		//通过确保单体对象只存在一份实例,你就可以确信自己的所有代码使用的同样的全局资源
 		// 单体的基本结构
 		// 最简单的单体实际就是一个对象字面量
-		var Signletion = {
-			attribute1: true,
-			attribute2: 10,
-
-			method1: function() {},
-			method2: function() {}
-		}
+		// 		var Signletion = {
+		// 			attribute1: true,
+		// 			attribute2: 10,
+		// 
+		// 			method1: function() {},
+		// 			method2: function() {}
+		// 		}
 		// 这个单体和其他 字面量对象没有什么不同
 		// 单体是一个用来划分命名空间并将一批属性和方法组织在一起的对象,
 		// 如果它能被实例化,只能实例化一次
@@ -29,25 +30,61 @@
 		// 	}
 		// })();
 		// 上述是一个普通单体 下面将他转为惰性单体
-		var MyNameSpace = {};
+		// var MyNameSpace = {};
+		// MyNameSpace.Signleton = (function() {
+		// 	var uniqueInstance;
+		// 	function constructor() {
+		// 		//私有
+		// 		var privateAttribute = false;
+		// 		return {
+		// 			publicAttribute : 10
+		// 		}
+		// 	};
+		// 	return {
+		// 		getInstance:function(){
+		// 			if(!uniqueInstance){
+		// 				uniqueInstance = constructor();
+		// 			}
+		// 			return uniqueInstance;
+		// 		}
+		// 	}
+		// })();
+		// console.log(MyNameSpace.Signleton.getInstance().publicAttribute)
+		// 
+		// function findProduct(id){
+		// 	....
+		// }
+		// 
+		// var resetProduct = $('reset-product');
+		// var findProduct = $('find-product');
+		// 
+		MyNameSpace = {};
 		MyNameSpace.Signleton = (function() {
 			var uniqueInstance;
+
 			function constructor() {
-				//私有
-				var privateAttribute = false;
+				var privateAttribute1 = false;
+				var privateAttribute2 = [1, 2, 3];
+
+				function publicMethod1() {};
+
+				function publicMethod2() {};
 				return {
-					publicAttribute : 10
+					publicAttribute1: true,
+					publicAttribute2: 10,
+					publicMethod1: function() {},
+					publicMethod2: function() {},
 				}
-			};
+			}
 			return {
-				getInstance:function(){
-					if(!uniqueInstance){
+				getInstance: function() {
+					if (!uniqueInstance) {
 						uniqueInstance = constructor();
 					}
 					return uniqueInstance;
 				}
 			}
 		})();
-		console.log(MyNameSpace.Signleton.getInstance().publicAttribute)
+		console.log(MyNameSpace.Signleton.getInstance().publicAttribute1);
 	</script>
 </html>

@@ -21,19 +21,20 @@
 		 }
 		 */
 		var CompositeForm = function(id,method,action){
-			//implements Composite FormItem
+			//implements Composite 和 FormItem 两个接口
 			this.implementsInterfaces = ['Composite','FormItem'];
 			//检查 是否实现
-			addForm(this);
+			implementsCheck(this,'Composite','FormItem');
+			// addForm(this);
 		} 
 		
-		function addForm(formInstance){
-			if(!implements1(formInstance,'Composite','FormItem')){
-				throw new Error('Objec does not implement a required interface');
-			}
-		}
+		// function addForm(formInstance){
+		// 	if(!implements(formInstance,'Composite','FormItem')){
+		// 		throw new Error('Objec does not implement a required interface');
+		// 	}
+		// }
 		
-		function implements1 (object){
+		function implementsCheck (object){
 			for(var i=1;i<arguments.length;i++){
 				var interfaceName = arguments[i];
 				var interfaceFound = false;

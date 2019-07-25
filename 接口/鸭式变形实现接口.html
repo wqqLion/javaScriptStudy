@@ -54,14 +54,10 @@
 		var ResultSet = new Interface('ResultSet',['getDate','getResults']);
 		
 		var resultObject = function(){
+			Interface.ensureImplements(this,ResultSet);
 		}
 		resultObject.prototype.getDate = function(){};
 		resultObject.prototype.getResults = function(){};
-		var resultFormatter = function(resultObject){
-			Interface.ensureImplements(resultObject,ResultSet);
-			
-		}
 		var test = new resultObject();
-		resultFormatter(resultObject.prototype);
 	</script>
 </html>

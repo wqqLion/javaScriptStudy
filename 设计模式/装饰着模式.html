@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script src="interface.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+		//自行车 接口
+		var Bicyle = new Interface('Bicyle',['assemble','wash','ride','repair','getPrice']);
+		
+		//AcmeComfortCruiser 品牌的自行车
+		var AcmeComfortCruiser = function(){};
+		AcmeComfortCruiser.prototype = {
+			assemble:function(){},
+			wash:function(){},
+			ride:function(){},
+			repair:function(){},
+			getPrice:function(){
+				return 399.00;
+			},
+		};
+		
+		//自行车配件 装饰者类  它是所有配件类的超类
+		/**
+		 * @param {type} bicyle 自行车类的 实例
+		 * 他是一个 抽象类
+		 * */
+		var BicyleDecoratot = function(bicyle){
+			Interface.ensureImplements(bicyle,Bicyle);
+			this.bicyle = bicyle;
+			this.interface = Bicyle;
+			outerLoop:for(var key in this.bicyle){
+				//如果 不是函数 继续循环
+				if(typeof this.bicyle[key] !== 'function'){
+					continue outerLoop;
+				}
+				// 如果函数在 接口中 继续循环
+				for(var i=0;i<this.interface.methods.length;i++){
+					if(key == this.interface.methods[i]){
+						continue outerLoop;
+					}
+				}
+				// 是函数 但 不在接口 中 说明 是新加的方法
+				var that = this;
+				(function(methodName){
+					that[methodName] = function(){
+						return that.bicyle[methodName]();
+					}
+				})(key)
+			}
+			
+		}
+		BicyleDecoratot.prototype = {
+			assemble:function(){
+				return this.bicyle.assemble();
+			},
+			wash:function(){
+				return this.bicyle.wash();
+			},
+			repair:function(){
+				return this.bicyle.repair();
+			},
+			getPrice:function(){
+				return this.bicyle.getPrice();
+			},
+			ride:function(){
+				return this.bicyle.ride();
+			}
+		}
+		
+		/**
+		 * HeadLightDecorator
+		 * 前灯类
+		 * 它要继承  BicyleDecoratot 类
+		 * */
+		 var HeadLightDecorator = function(bicyle){
+			 HeadLightDecorator.supClass.constructor.call(this,bicyle);
+		 }
+		 extend(HeadLightDecorator,BicyleDecoratot);
+		 //重写 超类 方法
+		 HeadLightDecorator.prototype.assemble = function(){
+			 return this.bicyle.assemble()+ '加个前灯';
+		 },
+		 HeadLightDecorator.prototype.getPrice = function(){
+			 return this.bicyle.getPrice()+ 15.00;
+		 }
+		 var myBicyle = new AcmeComfortCruiser();
+		 var price = myBicyle.getPrice();//裸车价 399
+		 myBicyle = new HeadLightDecorator(myBicyle); //加前灯
+		 var newPrice = myBicyle.getPrice(); // 前灯高配版 414
+		 myBicyle = new HeadLightDecorator(myBicyle); //加前灯
+		 /**
+		  * 添加新方法
+		  * 上面的 装饰者 实现了 自行车的全部方法，， 
+		  * 但是如果我们要是想 在装饰者中为 自行车
+		  * 加新的方法呢
+		  * */
+		  var BellDecorator = function(bicyle){
+			  BellDecorator.supClass.constructor.call(this,bicyle);
+		  }
+		  extend(BellDecorator,BicyleDecoratot);
+		  BellDecorator.prototype.assemble = function(){
+			  return this.bicyle.assemble()+'家里一个按铃';
+		  };
+		  BellDecorator.prototype.getPrice = function(){
+			  return this.bicyle.getPrice()+30;
+		  };
+		  BellDecorator.prototype.ringBell = function(){
+			  return '按铃被暗香了';
+		  };
+		  // BellDecorator 只能在最后 应用 因为 别的装饰者 并不知道新加的方法
+		  // 别的装饰者 会覆盖 为了解决这个问题 我们需要 修改 BicyleDecorator 的构造函数
+		  myBicyle = new BellDecorator(myBicyle);
+		  myBicyle = new HeadLightDecorator(myBicyle); //加前灯
+		  console.log(myBicyle.ringBell())
+		  //函数装饰者
+		  function upperCaseDecorator(func){
+			  console.log(func.apply(this,['22']))
+			  
+			  // return function(){
+				 //  return func.apply(this).toUpperCase();
+			  // }
+		  }
+		  var test = function(){
+			  console.log(arguments[0])
+			  return 'aa';
+		  }
+			
+		upperCaseDecorator(test);
+		  // upperCaseDecorator(function(){
+			 //  return 'aa';
+		  // })();
+	</script>
+</html>

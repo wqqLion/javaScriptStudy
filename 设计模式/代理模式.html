@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script src="interface.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+		// 代理是一个对象,他可以控制对另一个对象(本体)的访问
+		// 他与本体对象实现了同样的接口,并把任何方法调用传递给本体
+		// 就像为了实现跨域  我们使用服务器 代理一样 真正的业务逻辑还是在本体
+		var Publication = new Interface('publication',['getIsbn','setIsbn','getTitle','setTitle',
+		'getAuthor','setAuthor','display'
+		]);
+		var Book = function(isbn,title,author){};
+		
+		var Library = new Interface('Library',['findBooks','checkoutBook','returnBook']);
+		
+		var PublicLibrary = function(books){
+			this.catalog = {};
+			for(var i=0;i<books.length;i++){
+				this.catalog[books[i].getIsbn()] = {
+					book:books[i],
+					available:true
+				}
+			}
+		};
+		PublicLibrary.prototype = {
+			findBooks:function(searchString){
+				
+			}
+		}
+	</script>
+</html>

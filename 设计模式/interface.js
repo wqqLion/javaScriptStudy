@@ -23,28 +23,29 @@ Interface.ensureImplements = function(object) {
 		}
 		for (j = 0; j < interfacetmp.methods.length; j++) {
 			var method = interfacetmp.methods[j];
-			if (!object[method] || typeof object[method] != 'function') {
+			if (!object[method]  || typeof object[method] != 'function') {
 				throw new Error(method + '没有实现接口方法');
 			}
 		}
 	}
 }
 
-function extend(child,parent){
-			var F = function(){};
-			F.prototype = parent.prototype;
-			child.prototype = new F();
-			child.prototype.constructor = child;
-			child.parent = parent.prototype;
-			if(parent.prototype.constructor == Object.prototype.constructor){
-				parent.prototype.constructor = parent;
-			}
-		}
-function addEvent(ele,active,fn){
-	if(window.attachEvent){
-		ele.attachEvent(active,fn);
-	}else{
-		ele.addEventListener(active,fn);
+function extend(subClass, supClass) {
+	var F = function() {};
+	F.prototype = supClass.prototype;
+	subClass.prototype = new F();
+	subClass.prototype.constructor = subClass;
+	subClass.supClass = supClass.prototype;
+	if(supClass.prototype.constructor == Object.prototype.constructor){
+		supClass.prototype.constructor = supClass;
 	}
-}		
-		
+
+}
+
+function addEvent(ele, active, fn) {
+	if (window.attachEvent) {
+		ele.attachEvent(active, fn);
+	} else {
+		ele.addEventListener(active, fn);
+	}
+}

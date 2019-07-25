@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="calender.css"/>
+	</head>
+	<body>
+		<div id="container"></div>
+	</body>
+	<script src="interface.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+		var container = document.getElementById('container');
+		
+		
+		//未使用 享元模式
+		var CalendarItem = new Interface('CalenderItem',['display']);
+		var CalenderYear = function(year,parent){
+			var now = new Date();
+			var infoBox = document.createElement('div');
+			infoBox.className = 'info-box';
+			this.year = year || now.getFullYear();
+			this.month = now.getMonth();
+			this.day = now.getDate();
+			this.element = document.createElement('div');
+			parent.appendChild(infoBox);
+			parent.appendChild(this.element);
+			function isLeapYear(y){
+				return (y>0)&& !(y%4) && ((y%100) || !(y%400));
+			}
+			this.months = [];
+			this.numDays = [31,isLeapYear(this.year)?29:28,31,30,31,30,31,31,30,31,30,31];
+			for(var i = 0;i < 12;i++){
+				this.months[i] = new CalenderMonth(i,this.numDays[i],this.element);
+			}
+			
+			
+			this.display();
+		};
+		CalenderYear.prototype = {
+			display:function(){
+				for(var i=0;i<this.months.length;i++){
+					this.months[i].display();
+				}
+				document.getElementsByClassName('month-div')[this.month].style.display ='block';
+			},
+			
+		}
+		var CalenderMonth = function(monthNum,numDays,parent){
+			var now = new Date();
+			this.showMonth = now.getMonth();
+			this.monthNum = monthNum;
+			this.element = document.createElement('div');
+			this.element.className = 'month-div month-'+monthNum;
+			this.element.style.display = 'none';
+			parent.appendChild(this.element);
+			this.days = [];
+			for(var i=0;i<numDays;i++){
+				this.days[i] = new CalenderDay(i,this.element);
+			}
+		}
+		CalenderMonth.prototype = {
+			display:function(){
+				// for(var i=0;i< 12;i++){
+				// 	if(this.showMonth == i){
+				// 		console.log(i)
+				// 		this.element.style.display = 'block';
+				// 		break;
+				// 	}
+				// }
+				for(var i=0;i<this.days.length;i++){
+					this.days[i].display();
+				}
+				// this.element.style.display = 'none';
+			}
+		}
+		var CalenderDay = function(date,parent){
+			this.date = date;
+			this.element = document.createElement('span');
+			// this.element.style.display = 'none';
+			parent.appendChild(this.element);
+		};
+		CalenderDay.prototype = {
+			display:function(){
+				this.element.style.display = 'inline-block';
+				this.element.className = 'day-span';
+				this.element.innerHTML = this.date;
+			}
+		}
+		
+		var calender = new CalenderYear('2019',container);
+		// calender.display();
+	</script>
+</html>

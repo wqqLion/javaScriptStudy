@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script>
+		// 门面模式
+		//1.简化类的接口
+		//2.消除类与使用它的客户代码之间的耦合
+		function addEvent(el,type,fn){
+			if(window.addEventListener){
+				el.addEventListener(type,fn,false);
+			}else if(window.attachEvent){
+				el.attachEvent('on'+type,fn);
+			}else{
+				el['on'+type] = fn;
+			}
+		}
+	</script>
+</html>

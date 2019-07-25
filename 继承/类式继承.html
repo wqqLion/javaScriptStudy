@@ -32,7 +32,6 @@
 		var authorTs = new Author('唐家三少','斗罗大陆');
 		var authorName = authorTs.getName();
 		var authorBooks = authorTs.getBooks();
-		console.log(authorName+':'+authorBooks)
 		
 		function extend(child,parent){
 			var F = function(){};
@@ -47,13 +46,13 @@
 		
 		//创建 police 类
 		function Police(name){
-			// Person.call(this,name);
-			Police.parent.constructor.call(this.name);//同 Person.call(this,name); 解耦合
+			Police.parent.constructor.call(this,name);//同 Person.call(this,name); 解耦合
 			
 		}
 		//继承 Person
 		extend(Police,Person);
 		var qiLin = new Police('琪琳');
+		console.log(qiLin)
 		var name = qiLin.getName();
 		console.log(name)
 	</script>
