@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        #canvas-frame{
+            height: 600px;
+        }
+        #canvas1{
+            width: 100%;
+            display: block;
+            height: 600px;
+            overflow: scroll;
+        }
+    </style>
+</head>
+<body>
+<div id="canvas-frame"></div>
+<canvas id="canvas1"></canvas>
+</body>
+<script src="../js/three108.js"></script>
+<script>
+    window.onload = function () {
+        var canvas1 = document.getElementById('canvas1');
+        var ele = document.getElementById('canvas-frame');
+        var width = ele.clientWidth;
+        var height = ele.clientHeight;
+        var scene = new THREE.Scene();
+
+        var light = new THREE.DirectionalLight( 0xffffff );
+        light.position.set( 0, 0, 1 ).normalize();
+        scene.add( light );
+
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width,height);
+        // ele.appendChild(renderer.domElement);
+
+        var camera = new THREE.PerspectiveCamera(45,width/height,1,10000);
+        // camera.setViewOffset( fullWidth, fullHeight, viewX, viewY, width, height );
+        camera.position.z = 37;
+        // camera.position.set(0,0,35);
+        // camera.up.set(0,1,0);
+        // camera.lookAt(0,0,0);
+
+        var geometry = new THREE.IcosahedronGeometry(10,0);
+        var material = new THREE.MeshPhongMaterial( {
+            color: 0xffff00,
+            flatShading: true,
+            vertexColors: THREE.VertexColors,
+            shininess: 0
+        } );
+
+        var wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true, transparent: true } );
+        var mesh = new THREE.Mesh( geometry, material );
+        var wireframe = new THREE.Mesh( geometry, wireframeMaterial );
+        mesh.add( wireframe );
+        mesh.position.x = - 30;
+        // mesh.rotation.x = - 1.87;
+        scene.add( mesh );
+        renderer.render(scene,camera);
+
+        var context = canvas1.getContext( '2d' );
+        console.log(renderer.domElement)
+        context.drawImage( renderer.domElement, 0, 0 );
+
+
+    }
+</script>
+</html>

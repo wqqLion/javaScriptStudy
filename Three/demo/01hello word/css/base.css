@@ -1,0 +1,18 @@
+html,body
+{
+    font-family: Monospace;
+    font-weight: bold;
+    background-color: #ccccff;
+    margin: 0px;
+    overflow: hidden;
+    height: 100%;
+}
+#ThreeJs{
+    height: 100%;
+    width: 100%;
+}
+.dg{
+    position: absolute;
+    top: 0;
+    right: 0;
+}

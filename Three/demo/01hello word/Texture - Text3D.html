@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="css/base.css">
+    <!--    <link rel="stylesheet" href="../js/jquery/jquery-ui.css">-->
+    <!--    <link rel="stylesheet" href="css/info.css">-->
+</head>
+<body>
+<div id="ThreeJs" style="z-index: 1; position: absolute; left:0px; top:0px"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script src="../js/Detector.js"></script>
+<script src="../js/Stats.js"></script>
+<script src="../js/OrbitControls.js"></script>
+<script src="../js/THREEx.KeyborderdState.js"></script>
+<script src="../js/THREEx.FullScreen.js"></script>
+<script src="../js/THREEx.WindowREsize.js"></script>
+<script src="../js/SceneUtils.js"></script>
+<!--<script src="../js/jquery/jquery.js"></script>-->
+<!--<script src="../js/jquery/jqueryui.js"></script>-->
+<!--<script src="../js/info.js"></script>-->
+<script>
+    THREE.Cache.enabled = true;
+    var container, stats, permalink, hex;
+    var camera, cameraTarget, scene, renderer;
+    var group, textMesh1, textMesh2, textGeo, materials;
+    var firstLetter = true;
+    var text = "three.js",
+        height = 20,
+        size = 70,
+        hover = 30,
+        curveSegments = 4,
+        bevelThickness = 2,
+        bevelSize = 1.5,
+        bevelEnabled = true,
+        font = undefined,
+        fontName = "optimer", // helvetiker, optimer, gentilis, droid sans, droid serif
+        fontWeight = "bold"; // normal bold
+    var mirror = true;
+    var fontMap = {
+        "helvetiker": 0,
+        "optimer": 1,
+        "gentilis": 2,
+        "droid/droid_sans": 3,
+        "droid/droid_serif": 4
+    };
+    var weightMap = {
+        "regular": 0,
+        "bold": 1
+    };
+    var reverseFontMap = [];
+    var reverseWeightMap = [];
+    for ( var i in fontMap ) reverseFontMap[ fontMap[ i ] ] = i;
+    for ( var i in weightMap ) reverseWeightMap[ weightMap[ i ] ] = i;
+    var targetRotation = 0;
+    var targetRotationOnMouseDown = 0;
+    var mouseX = 0;
+    var mouseXOnMouseDown = 0;
+    var windowHalfX = window.innerWidth / 2;
+    var fontIndex = 1;
+
+
+
+
+    // var container, scene, camera, renderer, controls, stats,permalink, hex;
+    var keyboard = new THREEx.KeyboardState();
+    var clock = new THREE.Clock();
+    // var cube;
+
+    init();
+    animate();
+    function decimalToHex( d ) {
+        var hex = Number( d ).toString( 16 );
+        hex = "000000".substr( 0, 6 - hex.length ) + hex;
+        return hex.toUpperCase();
+    }
+
+
+    function init() {
+        // 场景
+        scene = new THREE.Scene();
+        var SCREEN_WIDTH = window.innerWidth,
+            SCREEN_HEIGHT = window.innerHeight;
+        var VIEW_ANGLE = 45,
+            ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT,
+            NEAR = 0.1,
+            FAR = 20000;
+        // 相机
+        camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+        scene.add(camera);
+        camera.position.set(0, 150, 400);
+        camera.lookAt(0, 0, 0);
+
+        // 渲染器
+        if (Detector.webgl) {
+            renderer = new THREE.WebGLRenderer({antialias: true});
+        } else {
+            renderer = new THREE.CanvasRenderer();
+        }
+        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        // 容器
+        container = document.getElementById('ThreeJs');
+        container.appendChild(renderer.domElement);
+
+        THREEx.WindowResize(renderer, camera);
+        THREEx.FullScreen.bindKey({
+            charCode: 'm'.charCodeAt(0)
+        });
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+
+        // 性能分析
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.bottom = '0px';
+        stats.domElement.style.zIndex = 100;
+        container.appendChild(stats.domElement);
+
+        //灯光
+        var light = new THREE.PointLight(0xffffff);
+        light.position.set(0, 250, 0);
+        scene.add(light);
+
+        // 地面
+        // var floorTexture = new THREE.ImageUtils.loadTexture('../images/checkerboard.jpg');
+        var floorTexture = new THREE.ImageUtils.loadTexture('../images/checkerboard.jpg');
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(10, 10);
+
+
+        var floorMaterial = new THREE.MeshBasicMaterial({
+            map: floorTexture,
+            side: THREE.DoubleSide
+        });
+        var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
+        var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.position.y = -0.5;
+        floor.rotation.x = Math.PI / 2;
+        scene.add(floor);
+
+        //天空
+        var skyGeometry = new THREE.CubeGeometry(10000, 10000, 10000);
+        var skyMaterial = new THREE.MeshBasicMaterial({
+            color: 0x9999ff,
+            side: THREE.BackSide
+        });
+        var skyBox = new THREE.Mesh(skyGeometry, skyMaterial);
+        scene.add(skyBox);
+
+        materials = [
+            new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } ), // front
+            new THREE.MeshPhongMaterial( { color: 0xffffff } ) // side
+        ];
+        group = new THREE.Group();
+        group.position.y = 100;
+        scene.add( group );
+        var loader = new THREE.FontLoader();
+
+        loader.load( '../fonts/helvetiker_regular.typeface.json', function ( font ) {
+            var chromeTexture = THREE.ImageUtils.loadTexture( '../images/Chrome.png' );
+            chromeTexture.wrapS = chromeTexture.wrapT = THREE.RepeatWrapping;
+            chromeTexture.repeat.set( 0.5, 0.5 );
+            var chromeMaterial = new THREE.MeshBasicMaterial( { map: chromeTexture } );
+
+            var lavaTexture = THREE.ImageUtils.loadTexture( '../images/lava.jpg' );
+            lavaTexture.wrapS = lavaTexture.wrapT = THREE.RepeatWrapping;
+            lavaTexture.repeat.set( 0.05, 0.05 );
+            var lavaMaterial = new THREE.MeshBasicMaterial( { map: lavaTexture } );
+
+            var materialArray = [ lavaMaterial, chromeMaterial ];
+            var textGeom = new THREE.TextGeometry( 'Hello three.js!', {
+                font: font,
+                size: 30,
+                height: 4,
+                curveSegments: 3,
+                bevelEnabled: true,
+                bevelThickness: 2,
+                bevelSize: 1,
+                bevelOffset: 0,
+                bevelSegments: 5
+            } );
+            // var materialFont = new THREE.MeshBasicMaterial({color:0xff0000});
+            // var materialSide = new THREE.MeshBasicMaterial({color:0x000088});
+            // var materialArray = [materialFont,materialSide];
+            var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+            var textMesh = new THREE.Mesh(textGeom,textMaterial);
+
+            textGeom.computeBoundingBox();
+            var textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
+            textMesh.position.set(-0.5*textWidth,50,100);
+            textMesh.rotation.x = -Math.PI/4;
+            scene.add(textMesh)
+        } );
+
+        // scene.fog = new THREE.FogExp2( 0x9999ff, 0.00025 );
+
+
+        // var textGeom = new THREE.TextGeometry( 'Hello three.js!', {
+        //     font: "helvetiker",
+        //     size: 80,
+        //     height: 5,
+        //     curveSegments: 12,
+        //     bevelEnabled: true,
+        //     bevelThickness: 10,
+        //     bevelSize: 8,
+        //     bevelOffset: 0,
+        //     bevelSegments: 5
+        // } );
+        // var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+        // var textMesh = new THREE.Mesh(textGeom,textMaterial);
+        //
+        // textGeom.computeBoundingBox();
+        // var textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
+        // textMesh.position.set(-0.5*textWidth,50,100);
+        // textMesh.rotation.x = -Math.PI/4;
+        // scene.add(textMesh)
+
+        // var textGeo = new THREE.TextGeometry( 'text', {
+        //     size: 70,
+        //     height: 20,
+        //     curveSegments: 4,
+        //     bevelThickness: 2,
+        //     bevelSize: 1.5,
+        //     bevelEnabled: true
+        // } );
+
+
+
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        render();
+        update();
+    }
+
+    function update() {
+        var delta = clock.getDelta();
+
+        // functionality provided by THREEx.KeyboardState.js
+        if (keyboard.pressed("1"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 1';
+        if (keyboard.pressed("2"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 2 ';
+
+        controls.update();
+        stats.update();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+</script>
+</html>

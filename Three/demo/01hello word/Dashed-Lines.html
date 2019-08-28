@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="css/base.css">
+    <!--    <link rel="stylesheet" href="../js/jquery/jquery-ui.css">-->
+    <!--    <link rel="stylesheet" href="css/info.css">-->
+</head>
+<body>
+<div id="ThreeJs" style="z-index: 1; position: absolute; left:0px; top:0px"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script src="../js/Detector.js"></script>
+<script src="../js/Stats.js"></script>
+<script src="../js/OrbitControls.js"></script>
+<script src="../js/THREEx.KeyborderdState.js"></script>
+<script src="../js/THREEx.FullScreen.js"></script>
+<script src="../js/THREEx.WindowREsize.js"></script>
+
+<!--<script src="../js/jquery/jquery.js"></script>-->
+<!--<script src="../js/jquery/jqueryui.js"></script>-->
+<!--<script src="../js/info.js"></script>-->
+<script>
+    var container, scene, camera, renderer, controls, stats;
+    var keyboard = new THREEx.KeyboardState();
+    var clock = new THREE.Clock();
+    var cube;
+    init();
+    animate();
+
+    function init() {
+        // 场景
+        scene = new THREE.Scene();
+        var SCREEN_WIDTH = window.innerWidth,
+            SCREEN_HEIGHT = window.innerHeight;
+        var VIEW_ANGLE = 45,
+            ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT,
+            NEAR = 0.1,
+            FAR = 20000;
+        // 相机
+        camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+        scene.add(camera);
+        camera.position.set(0, 150, 400);
+        camera.lookAt(0, 0, 0);
+
+        // 渲染器
+        if (Detector.webgl) {
+            renderer = new THREE.WebGLRenderer({antialias: true});
+        } else {
+            renderer = new THREE.CanvasRenderer();
+        }
+        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        // 容器
+        container = document.getElementById('ThreeJs');
+        container.appendChild(renderer.domElement);
+
+        THREEx.WindowResize(renderer, camera);
+        THREEx.FullScreen.bindKey({
+            charCode: 'm'.charCodeAt(0)
+        });
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+
+        // 性能分析
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.bottom = '0px';
+        stats.domElement.style.zIndex = 100;
+        container.appendChild(stats.domElement);
+
+        //灯光
+        var light = new THREE.PointLight(0xffffff);
+        light.position.set(0, 250, 0);
+        scene.add(light);
+
+        var axes = new THREE.AxesHelper(1000);
+        scene.add( axes );
+
+        var lineGeometry = new THREE.Geometry();
+        var vertArray = lineGeometry.vertices;
+        vertArray.push(new THREE.Vector3(-150, -100, 0), new THREE.Vector3(-150, 100, 0));
+        var lineMaterial = new THREE.LineBasicMaterial({color: 0xcc0000});
+        var line = new THREE.Line(lineGeometry, lineMaterial);
+        line.computeLineDistances();
+        scene.add(line);
+
+        var lineGeometry = new THREE.Geometry();
+        var vertArray = lineGeometry.vertices;
+        vertArray.push( new THREE.Vector3(-100, -100, 0), new THREE.Vector3(-100, 100, 0) );
+        var lineMaterial = new THREE.LineDashedMaterial( { color: 0x00cc00, dashSize: 4, gapSize: 2 } );
+        var line = new THREE.Line( lineGeometry,  lineMaterial);
+        line.computeLineDistances();
+        scene.add(line);
+
+        // var cubGeometry = new THREE.CubeGeometry(50,50,50);
+        // var dashMaterial = new THREE.LineDashedMaterial({ color: 0x000000, dashSize: 2, gapSize: 3 });
+        // console.log(geo2line(cubGeometry));
+        // cubGeometry = geo2line(cubGeometry);
+        // console.log(geo2line(cubGeometry));
+        //
+        // cube = new THREE.Line(cubGeometry,dashMaterial,THREE.LineSegments);
+        // cube.position.set(50,26,0);
+        // // cube.computeLineDistances();
+        // scene.add(cube);
+        var cubeGeometry = new THREE.CubeGeometry( 50, 50, 50 );
+        cubeGeometry = geo2line(cubeGeometry);
+        // use LineBasicMaterial if no dashes are desired
+        var lineMaterial = new THREE.LineDashedMaterial( { color: 0x00cc00, dashSize: 4, gapSize: 2 } );
+        cube = new THREE.Line( cubeGeometry, lineMaterial);
+        cube.position.set(50,26,0);
+        cube.computeLineDistances();
+        scene.add(cube);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        render();
+        update();
+    }
+
+    function update() {
+        var delta = clock.getDelta();
+
+        // functionality provided by THREEx.KeyboardState.js
+        if (keyboard.pressed("1"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 1';
+        if (keyboard.pressed("2"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 2 ';
+
+        controls.update();
+        stats.update();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+    function geo2line( geo ) // credit to WestLangley!
+    {
+        var geometry = new THREE.Geometry();
+        var vertices = geometry.vertices;
+        for ( i = 0; i < geo.faces.length; i++ )
+        {
+            var face = geo.faces[ i ];
+            if ( face instanceof THREE.Face3 )
+            {
+                var a = geo.vertices[ face.a ].clone();
+                var b = geo.vertices[ face.b ].clone();
+                var c = geo.vertices[ face.c ].clone();
+                vertices.push( a,b, b,c, c,a );
+            }
+            else if ( face instanceof THREE.Face4 )
+            {
+                var a = geo.vertices[ face.a ].clone();
+                var b = geo.vertices[ face.b ].clone();
+                var c = geo.vertices[ face.c ].clone();
+                var d = geo.vertices[ face.d ].clone();
+                vertices.push( a,b, b,c, c,d, d,a );
+            }
+        }
+
+
+        return geometry;
+    }
+</script>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #canvas-frame{
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+<div id="canvas-frame"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script>
+    window.onload=function () {
+        var ele = document.getElementById('canvas-frame');
+        var width = ele.clientWidth;
+        var height = ele.clientHeight;
+
+        var scene = new THREE.Scene();
+
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width,height);
+        ele.appendChild(renderer.domElement);
+
+        var camera = new THREE.PerspectiveCamera(45,width/height,1,10000);
+        camera.position.set(100,300,600);
+        camera.up.set(0,1,0);
+        camera.lookAt(0,0,0);
+
+        //网格
+        var helper = new THREE.GridHelper(1000,50,0x0000ff,0x808080);
+        scene.add(helper);
+
+        //盒子
+        var geometry = new THREE.BoxGeometry(100,100,100);
+        for(var i=0;i<geometry.faces.length;i+=2){
+            var hex = Math.random()* 0xffffff;
+            geometry.faces[i].color.setHex(hex);
+            geometry.faces[i+1].color.setHex(hex);
+        }
+        var material = new THREE.MeshBasicMaterial({vertexColors:THREE.FaceColors});
+        var mesh = new THREE.Mesh(geometry,material);
+        var group = new THREE.Group();
+        group.add(mesh);
+        mesh.translateX(50);
+        mesh.translateY(50);
+        mesh.translateZ(-50);
+        scene.add(group);
+
+        function animation() {
+            group.rotation.y+=0.01;
+            renderer.render(scene,camera);
+            requestAnimationFrame(animation);
+        }
+        animation();
+    }
+</script>
+</html>

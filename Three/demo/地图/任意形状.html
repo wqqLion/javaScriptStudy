@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body{
+            margin: 0;
+        }
+        canvas{
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+</body>
+<script src="../js/three108.js"></script>
+<script src="../js/OrbitControls.js"></script>
+<script src="../js/ThreeBSP.js"></script>
+<script src="../js/Earcut.js"></script>
+<script>
+    var screenWidth,screenHeight;
+    var light,scene,camera,renderer;
+    function initObject() {
+
+        // 添加一个精灵
+        var spriteMap = new THREE.TextureLoader().load(drawCanvas({text:"仓库", width:64, height:64}).toDataURL());
+        var spriteMaterial = new THREE.SpriteMaterial({
+            map:spriteMap,
+            color:0x111111
+        });
+        var sprite = new THREE.Sprite(spriteMaterial);
+        sprite.position.set(5,19,5);
+        sprite.scale.set(5,5,1);
+        sprite.rotation.y = 0.2;
+        console.log(sprite);
+        scene.add(sprite);
+
+        var test = getGeometry([[0,0,0],[10,0,0],[10,0,10], [0,0,10],[0,0,0]],5);
+        var testMaterial = new THREE.MeshBasicMaterial({color:0x00ffff,side:THREE.DoubleSide});
+        mesh = new THREE.Mesh(test,testMaterial);
+
+        mesh.position.set(0,10,0);
+        scene.add(mesh);
+        var borderGeometry = getBorderGeometry([[0,5,0],[10,5,0],[10,5,10], [0,5,10],[0,5,0]],0x00ffff);
+        var borderMaterial = new THREE.LineBasicMaterial( { vertexColors: !THREE.VertexColors,color:0xff0000} );
+        var line = new THREE.Line( borderGeometry,borderMaterial ,THREE.LineSegments );
+        line.position.set(0,10,0);
+        scene.add(line);
+
+        // console.log(borderGeometry);
+        // 坐标轴
+        var axis = new THREE.AxisHelper(100);
+        // 在场景中添加坐标轴
+        scene.add(axis);
+    }
+    function initScene() {
+        scene = new THREE.Scene();
+    }
+    function initCamera() {
+        screenWidth = window.innerWidth;
+        screenHeight = window.innerHeight;
+
+        var angle = 75,
+            aspect = screenWidth/screenHeight,
+            near =1,
+            far= 2000;
+        camera = new THREE.PerspectiveCamera(angle,aspect,near,far);
+        camera.position.set(20,40,20);
+        // camera.position.set(0,10000,20);
+        camera.lookAt(0,0,0);
+    }
+    function initRender() {
+        renderer = new THREE.WebGLRenderer({antialias:true});
+        renderer.setSize(screenWidth,screenHeight);
+        document.body.appendChild(renderer.domElement);
+        renderer.setClearColor(0xffffff,1.0);
+
+    }
+    function initLight() {
+        light = new THREE.DirectionalLight(0xffffff,1);
+        light.position.set(1,1,1);
+        scene.add(light);
+    }
+    function render() {
+        requestAnimationFrame(render);
+        renderer.render(scene,camera);
+    }
+    function init() {
+        initScene();
+        initCamera();
+        initRender();
+        initLight();
+
+        initObject();
+
+        render();
+    }
+    window.onload=function () {
+        init();
+    };
+    function getGeometry(points,height){
+        var topPoints = [];
+        for(var i=0;i<points.length;i++){
+            var vertice = points[i];
+            topPoints.push([vertice[0],vertice[1]+height,vertice[2]]);
+        }
+
+        // console.log(topPoints)
+        var totalPoints = points.concat(topPoints);
+        var vertices =[];           //所有的顶点
+        for(var i=0;i<totalPoints.length;i++){
+            vertices.push(new THREE.Vector3(totalPoints[i][0],totalPoints[i][1],totalPoints[i][2]))
+        }
+        var length = points.length;
+        var faces = [];
+        for(var j=0;j<length;j++){                      //侧面生成三角形
+            if(j!=length-1){
+                faces.push(new THREE.Face3(j,j+1,length+j+1));
+                faces.push(new THREE.Face3(length+j+1,length+j,j));
+            }else{
+                faces.push(new THREE.Face3(j,0,length));
+                faces.push(new THREE.Face3(length,length+j,j));
+            }
+        }
+        var data=[];
+        for(var i=0;i<length;i++){
+            data.push(points[i][0],points[i][2]);
+        }
+        var triangles = Earcut.triangulate(data);
+        if(triangles && triangles.length != 0){
+            for(var i=0;i<triangles.length;i++){
+                var tlength = triangles.length;
+                if(i%3==0 && i < tlength-2){
+                    faces.push(new THREE.Face3(triangles[i],triangles[i+1],triangles[i+2]));                            //底部的三角面
+                    faces.push(new THREE.Face3(triangles[i]+length,triangles[i+1]+length,triangles[i+2]+length));        //顶部的三角面
+                }
+            }
+        }
+        var geometry = new THREE.Geometry();
+        geometry.vertices = vertices;
+        geometry.faces = faces;
+        geometry.computeFaceNormals();      //自动计算法向量
+        return geometry;
+    }
+    getBorderGeometry = function(points,color){
+        var geometry = new THREE.Geometry();
+        for(var i=0;i<points.length;i++){
+            var point = points[i];
+            geometry.vertices.push(new THREE.Vector3(point[0],point[1],point[2]));
+            // if(i== point.length-1){
+            //     geometry.vertices.push(new THREE.Vector3(point[0][0],point[0][1],point[0][2]));
+            // }
+        }
+        return geometry;
+    }
+    //创建canvas对象
+    function drawCanvas(options) {
+        let canvas = document.createElement("canvas");
+        canvas.width = options.width;
+        canvas.height = options.height;
+
+        let ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgba(0, 0, 0, 0)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = "40px Verdana";
+        ctx.fillStyle = "#fff";
+        ctx.fillText(options.text, 0, 56, options.width);
+        return canvas;
+    }
+</script>
+</html>

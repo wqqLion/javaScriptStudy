@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #canvas-frame{
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-frame"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script>
+    window.onload =function () {
+        var ele = document.getElementById('canvas-frame');
+        var width = ele.clientWidth;
+        var height = ele.clientHeight;
+
+        var scene = new THREE.Scene();
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width,height);
+        ele.appendChild(renderer.domElement);
+        var camera = new THREE.PerspectiveCamera(45,width/height,1,10000);
+        camera.position.set(10,10,10);
+        camera.up.set(0,10,0);
+        camera.lookAt(0,0,0);
+
+        //初始化几何体
+        var geometry = new THREE.Geometry();
+        //初始化 材质
+        var material = new THREE.LineBasicMaterial({vertexColors:true});
+        var lineMaterial = new THREE.LineDashedMaterial( { color: 0x00cc00, dashSize: 40, gapSize: 20 } );
+        //初始化2个点
+        var p1 = new THREE.Vector3(-10,0,0);
+        var p2 = new THREE.Vector3(0,-10,0);
+        //初始化两种颜色
+        var color1 = new THREE.Color(0xfff000);
+        var color2 = new THREE.Color(0xffff00);
+
+        geometry.vertices.push(p1);
+        geometry.vertices.push(p2);
+
+        geometry.colors.push(color1,color2);
+        var line = new THREE.Line(geometry,lineMaterial);
+
+        scene.add(line);
+
+        renderer.render(scene,camera);
+    }
+</script>
+</html>

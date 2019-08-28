@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="ThreeJS" style="position: absolute; left: 0px; top: 0px"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script src="../js/OrbitControls.js"></script>
+<script src="../js/ThreeBSP.js"></script>
+<script src="../js/Detector.js"></script>
+<script src="../js/Stats.js"></script>
+
+<script src="../js/THREEx.FullScreen.js"></script>
+<script src="../js/THREEx.KeyborderdState.js"></script>
+<script src="../js/THREEx.WindowREsize.js"></script>
+<script>
+    // 设置全局变量
+    var scene, camera, renderer, controls, tween, door;
+    var keyboard = new THREEx.KeyboardState();//保持键盘的当前状态，可以随时查询
+    var clock = new THREE.Clock();
+    var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+    var VIEW_ANGLE = 75, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 10000;
+    var materialArrayA = [];
+    var materialArrayB = [];
+    var matArrayA = [];//内墙
+    var matArrayB = [];//外墙
+    var dummy = new THREE.Object3D();//仿制品
+    init();
+    animate();
+    function initScene() {
+        scene = new THREE.Scene();
+        //辅助线e
+        var axes = new THREE.AxesHelper(1000);
+        scene.add(axes);
+    }
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(VIEW_ANGLE,ASPECT,NEAR,FAR);
+        camera.position.set(0,1000,1800);
+        camera.lookAt(0,0,0);
+        scene.add(camera);
+    }
+    function initRender() {
+        renderer = new THREE.WebGLRenderer({antialias:true});
+        renderer.setSize(SCREEN_WIDTH,SCREEN_HEIGHT);
+        container = document.getElementById('ThreeJS');
+        container.appendChild(renderer.domElement);
+        renderer.setClearColor(0x4682B4, 1.0);
+    }
+    function initControls() {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+    }
+    function initLight() {
+        // 位置不同，方向光作用于物体的面也不同，看到的物体各个面的颜色也不同
+        // A start, 第二个参数是光源强度
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 1);//模拟远处类似太阳的光源
+        directionalLight.position.set(0, 100, 0).normalize();
+        scene.add(directionalLight);
+        //A end
+        var ambient = new THREE.AmbientLight(0xffffff, 1); //AmbientLight,影响整个场景的光源
+        ambient.position.set(0, 0, 0);
+        scene.add(ambient);
+    }
+    function initEvent() {
+        THREEx.WindowResize(renderer,camera);
+        THREEx.FullScreen.bindKey({
+            charCode : 'm'.charCodeAt(0)
+        })
+    }
+    //创建地板
+    function createFloor() {
+        var loader = new THREE.TextureLoader();
+        loader.load("../images/floor.jpg",function (texture) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(10,10);
+            var floorGeometry = new THREE.BoxGeometry(1600,1100,1);
+            var floorMaterial = new THREE.MeshBasicMaterial({
+                map:texture,
+                side:THREE.DoubleSide
+            });
+            var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.position.y = -0.5;
+            floor.rotation.x = Math.PI / 2;
+            scene.add(floor);
+        })
+    }
+    // 创建墙体
+    function createCubWall(width,height,depth,angle,material,x,y,z) {
+        var cubGeometry = new THREE.BoxGeometry(width,height,depth);
+        var cube = new THREE.Mesh(cubGeometry,material);
+        cube.position.set(x,y,z);
+        cube.rotation.y += angle * Math.PI; //-逆时针旋转,+顺时针
+        scene.add(cube);
+    }
+    //创建墙纹理
+    function createWallMaterail() {
+        matArrayA.push(new THREE.MeshPhongMaterial({
+            color : 0xafc0ca
+        })); //前  0xafc0ca :灰色
+        matArrayA.push(new THREE.MeshPhongMaterial({
+            color : 0xafc0ca
+        })); //后  
+        matArrayA.push(new THREE.MeshPhongMaterial({
+            color : 0xd6e4ec
+        })); //上  0xd6e4ec： 偏白色
+        matArrayA.push(new THREE.MeshPhongMaterial({
+            color : 0xd6e4ec
+        })); //下  
+        matArrayA.push(new THREE.MeshPhongMaterial({
+            color : 0xafc0ca
+        })); //左    0xafc0ca :灰色
+        matArrayA.push(new THREE.MeshPhongMaterial({
+            color : 0xafc0ca
+        })); //右
+
+        matArrayB.push(new THREE.MeshPhongMaterial({
+            color : 0xafc0ca
+        })); //前  0xafc0ca :灰色
+        matArrayB.push(new THREE.MeshPhongMaterial({
+            color : 0x9cb2d1
+        })); //后  0x9cb2d1：淡紫
+        matArrayB.push(new THREE.MeshPhongMaterial({
+            color : 0xd6e4ec
+        })); //上  0xd6e4ec： 偏白色
+        matArrayB.push(new THREE.MeshPhongMaterial({
+            color : 0xd6e4ec
+        })); //下  
+        matArrayB.push(new THREE.MeshPhongMaterial({
+            color : 0xafc0ca
+        })); //左   0xafc0ca :灰色
+        matArrayB.push(new THREE.MeshPhongMaterial({
+            color : 0xafc0ca
+        })); //右
+
+    }
+    // 返回墙体对象
+    function returnWallObject(width,height,depth,angle,material,x,y,z) {
+        var cubeGeometry = new THREE.BoxGeometry(width,height,depth);
+        var cube = new THREE.Mesh(cubeGeometry,material);
+        cube.position.set(x,y,z);
+        cube.rotation.y += angle* Math.PI;
+        return cube;
+    }
+    //墙体 开孔
+    function createResultBsp(bsp,less_bsp,mat) {
+        switch (mat) {
+            case 1:
+                var material = new THREE.MeshPhongMaterial({
+                   color:0x9cb2d1,
+                   specular:0x9cb2d1,
+                   shininess:30,
+                   transparent:true,
+                   opacity:1
+                });
+                break;
+            case 2:
+                var material = new THREE.MeshPhongMaterial({
+                    color:0xafc0ca,
+                    specular:0xafc0ca,
+                    shininess:30,
+                    transparent:true,
+                    opacity:1
+                });
+                break;
+        }
+        var sphereBSP = new ThreeBSP(bsp);
+        var cube2BSP = new ThreeBSP(less_bsp);
+        var resultBSP = sphereBSP.subtract(cube2BSP);
+        var result = resultBSP.toMesh(material);
+
+        result.material.flatShading = THREE.FlatShading;
+        result.geometry.computeFaceNormals(); //重新计算几何体侧面法向量
+        result.geometry.computeVertexNormals();
+        result.material.needsUpdate = true; //更新纹理
+        result.geometry.buffersNeedUpdate = true;
+        result.geometry.uvsNeedUpdate = true;
+        scene.add(result);
+    }
+    function createLayout() {
+        //左边
+        createCubWall(10,200,900,0,matArrayB,-651,100,0);
+        // 右边
+        createCubWall(10, 200, 900, 1, matArrayB, 651, 100, 0);
+        //后墙
+        createCubWall(10, 200, 1310, 1.5, matArrayB, 0, 100, -451);
+
+        var wall = returnWallObject(1310,200,10,0,matArrayB,0,90,455);
+        //门框
+        var door_cube = returnWallObject(100,180,10,0,matArrayB,0,90,455);
+        createResultBsp(wall,door_cube,1);
+
+
+        var loader = new THREE.TextureLoader();
+        loader.load("../images/crate.gif",function (texture) {
+            var doorgeometry = new THREE.BoxGeometry(100,180,2);
+            var doorMaterial = new THREE.MeshBasicMaterial({
+                map:texture,
+                color:0xfffff
+            });
+            doorMaterial.opacity = 1.0;
+            doorMaterial.transparent = true;
+            door = new THREE.Mesh(doorgeometry,doorMaterial);
+            door.position.set(-50,0,0);
+            var door1 = door.clone();
+            door1.visible = false;
+            dummy.add(door);
+            // dummy.add(door1);
+            dummy.position.set(50,90,451);
+            scene.add(dummy);
+        })
+
+        // 房间A:隔墙1 
+        createCubWall(10, 200, 250, 0, matArrayA, -151, 100, 325);
+        //房间A:隔墙2  无门
+        createCubWall(10, 200, 220, 0.5, matArrayA, -256, 100, 201);
+        // 厨房：隔墙3 
+        createCubWall(350, 200, 10, 0, matArrayA, 481, 100, 131);
+        // 厨房：隔墙4 无门
+        createCubWall(10, 200, 200, 0, matArrayA, 301, 100, 225);
+        // 房间B 
+        createCubWall(350, 200, 10, 0, matArrayA, -471, 100, -50);
+        //房间B  无门
+        createCubWall(200, 200, 10, 0.5, matArrayA, 0, 100, -350);
+        // 房间C
+        createCubWall(220, 200, 10, 0, matArrayA, 540, 100, -50);
+        //房间C 无门
+        createCubWall(200, 200, 10, 0.5, matArrayA, 250, 100, -350);
+        //厕所
+        var cube = returnWallObject(10, 200, 260, 0.5, matArrayA, 125, 100,
+            -250);
+        //厕所门框
+        var door_cube1 = returnWallObject(10, 160, 80, 0.5, matArrayA, 155,
+            90, -250);
+        createResultBsp(cube, door_cube1, 2);
+
+        //茶色：0x58ACFA   透明玻璃色：0XECF1F3
+        var glass_material = new THREE.MeshBasicMaterial({
+            color : 0x58ACFA
+        });
+        glass_material.opacity = 0.6;
+        glass_material.transparent = true;
+        createCubWall(1, 180, 80, 0.5, glass_material, 155, 90, -250);
+
+        //添加一个精灵
+        var spritey = makeTextSprite( " 卫生间",
+            {   fontsize: 24,
+                width:100,
+                height:100,
+                borderColor: {r:255, g:0, b:0, a:1.0},
+                backgroundColor: {r:255, g:100, b:100, a:0.8} } );
+
+        spritey.position.set(155,405,-500);
+        scene.add( spritey );
+    }
+
+    function initObject() {
+        createWallMaterail();
+        createFloor();
+        createLayout();
+    }
+
+    function init() {
+        initScene();
+        initCamera();
+        initRender();
+        initControls();
+        initLight();
+        initEvent();
+        initObject();
+        //监听键盘按键
+        document.addEventListener("keydown", onkeyDown, false);
+    }
+    var door_state = true;//默认是门是关闭的
+    //Enter=13,Space=32;
+    function onkeyDown(event) {
+        switch (event.keyCode) {
+            case 13:
+                console.log(event.keyCode);
+                if (door_state) {
+                    dummy.rotation.y += 0.5 * Math.PI;
+                    door_state = false;
+                } else {
+                    dummy.rotation.y -= 0.5 * Math.PI;
+                    door_state = true;
+                }
+                break;
+            default:
+                console.log(event.keyCode);
+                break;
+        }
+    }
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene,camera);
+    }
+
+    //创建canvas对象
+    function createSprite(options) {
+        let canvas = document.createElement("canvas");
+        canvas.width = options.width;
+        canvas.height = options.height;
+        let ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = "60px Verdana";
+        ctx.fillStyle = options.fColor;
+        ctx.fillText(options.text, 0, 56, options.width);
+        var spriteMapCube = new THREE.Texture(canvas);
+        spriteMapCube.wrapS = THREE.RepeatWrapping;
+        spriteMapCube.wrapT = THREE.RepeatWrapping;
+        spriteMapCube.needsUpdate = true;
+        var spriteCube = new THREE.Sprite(new THREE.SpriteMaterial({map: spriteMapCube, color: 0xffffff}));
+        spriteCube.position.set(options.x,options.y,options.z); //设置位置
+        spriteCube.scale.set(300, 150, 1); //设置scale进行大小设置
+        spriteCube.center.set(0.5, 0); //设置位置点处于精灵的最下方中间位置
+        return spriteCube;
+    }
+
+    function makeTextSprite( message, parameters )
+    {
+        if ( parameters === undefined ) parameters = {};
+
+        var fontface = parameters.hasOwnProperty("fontface") ?
+            parameters["fontface"] : "Arial";
+
+        var fontsize = parameters.hasOwnProperty("fontsize") ?
+            parameters["fontsize"] : 18;
+
+        var borderThickness = parameters.hasOwnProperty("borderThickness") ?
+            parameters["borderThickness"] : 4;
+
+        var borderColor = parameters.hasOwnProperty("borderColor") ?
+            parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+
+        var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
+            parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+
+        // var spriteAlignment = THREE.SpriteAlignment.topLeft;
+
+        var canvas = document.createElement('canvas');
+        canvas.width = parameters.width || 100;
+        canvas.height = parameters.height || 100;
+        var context = canvas.getContext('2d');
+        context.font = "Bold " + fontsize + "px " + fontface;
+
+        // get size data (height depends only on font size)
+        var metrics = context.measureText( message );
+        var textWidth = metrics.width;
+
+        // background color
+        context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
+            + backgroundColor.b + "," + backgroundColor.a + ")";
+        // border color
+        context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
+            + borderColor.b + "," + borderColor.a + ")";
+
+        context.lineWidth = borderThickness;
+        roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
+        // 1.4 is extra height factor for text below baseline: g,j,p,q.
+
+        // text color
+        context.fillStyle = "rgba(0, 0, 0, 1.0)";
+        context.fillText( message, borderThickness, fontsize + borderThickness);
+        // canvas contents will be used for a texture
+        var texture = new THREE.Texture(canvas)
+        texture.needsUpdate = true;
+
+        var spriteMaterial = new THREE.SpriteMaterial(
+            { map: texture, useScreenCoordinates: false,  } );
+        var sprite = new THREE.Sprite( spriteMaterial );
+        sprite.scale.set(300,350,1.0);
+        return sprite;
+    }
+
+    // function for drawing rounded rectangles
+    function roundRect(ctx, x, y, w, h, r)
+    {
+        ctx.beginPath();
+        ctx.moveTo(x+r, y);
+        ctx.lineTo(x+w-r, y);
+        ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+        ctx.lineTo(x+w, y+h-r);
+        ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+        ctx.lineTo(x+r, y+h);
+        ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+        ctx.lineTo(x, y+r);
+        ctx.quadraticCurveTo(x, y, x+r, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+</script>
+
+</html>

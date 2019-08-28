@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #canvas-frame{
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-frame"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script>
+    window.onload = function () {
+        var ele = document.getElementById('canvas-frame');
+        var width = ele.clientWidth;
+        var height = ele.clientHeight;
+        var scene = new THREE.Scene();
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width,height);
+        ele.appendChild(renderer.domElement);
+        var camera = new THREE.PerspectiveCamera(45,width/height,1,10000);
+        camera.position.set(0,0,600);
+        camera.up.set(0,1,0);
+        camera.lookAt(0,0,0);
+        
+        var geometry = new THREE.CylinderGeometry( 100,150,400);
+        var material = new THREE.MeshBasicMaterial({color:0xff0000});
+        var mesh = new THREE.Mesh(geometry,material);
+        scene.add(mesh);
+
+        //运动 物体
+        function animation() {
+            //相机移动
+            // camera.position.x = camera.position.x +=0.1;
+            //物体移动
+            mesh.position.x +=0.1;
+            renderer.render(scene,camera);
+            requestAnimationFrame(animation);
+        }
+        animation();
+    }
+</script>
+</html>
