@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="ThreeJS" style="position: absolute; left: 0px; top: 0px"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script src="../js/OrbitControls.js"></script>
+<script src="../js/ThreeBSP.js"></script>
+<script src="../js/Detector.js"></script>
+<script src="../js/Stats.js"></script>
+<script src="../js/ColladaLoader.js"></script>
+<script src="../js/GLTFLoader.js"></script>
+<script src="../js/THREEx.FullScreen.js"></script>
+<script src="../js/THREEx.KeyborderdState.js"></script>
+<script src="../js/THREEx.WindowREsize.js"></script>
+<script>
+    // 设置全局变量
+    var scene, camera, renderer, controls, tween, door;
+    var keyboard = new THREEx.KeyboardState();//保持键盘的当前状态，可以随时查询
+    var clock = new THREE.Clock();
+    var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+    var VIEW_ANGLE = 75, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 10000;
+
+   function initThree() {
+       scene = new THREE.Scene();
+
+       camera = new THREE.PerspectiveCamera(VIEW_ANGLE,ASPECT,NEAR,FAR);
+       camera.position.set(0,100,100);
+
+       renderer = new THREE.WebGLRenderer();
+       renderer.setSize(SCREEN_WIDTH,SCREEN_HEIGHT);
+       controls = new THREE.OrbitControls(camera, renderer.domElement);
+       // controls = new THREE.MapControls(camera,renderer.domElement);
+       console.log(controls)
+   }
+   initThree();
+</script>
+
+</html>

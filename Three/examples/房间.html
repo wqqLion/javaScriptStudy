@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+<script type="module">
+    import * as THREE from '../build/three.module.js';
+    import { MapControls,OrbitControls } from './jsm/controls/OrbitControls.js';
+    import {GLTFLoader} from "./jsm/loaders/GLTFLoader.js";
+    import {DRACOLoader} from "./jsm/loaders/DRACOLoader.js";
+    // 设置全局变量
+    var scene, camera, renderer, controls, tween, door,controlsMap;
+    var clock = new THREE.Clock();
+    var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+    var VIEW_ANGLE = 75, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 10000;
+    function initThree() {
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(VIEW_ANGLE,ASPECT,NEAR,FAR);
+        // camera.position.set(0,200,500);
+        camera.position.set(200, 500, 800); //设置相机位置
+
+        renderer = new THREE.WebGLRenderer({antialias:true});
+        renderer.setSize(SCREEN_WIDTH,SCREEN_HEIGHT);
+        document.body.appendChild(renderer.domElement);
+
+        var ambient = new THREE.AmbientLight(0xffffff, 1); //AmbientLight,影响整个场景的光源
+        ambient.position.set(0, 0, 0);
+        scene.add(ambient);
+
+        controls = new OrbitControls(camera,renderer.domElement);
+
+        // controlsMap = new MapControls(camera,renderer.domElement);
+        // controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+        // controls.dampingFactor = 0.05;
+        // controls.screenSpacePanning = false;
+        // controls.minDistance = 100;
+        // controls.maxDistance = 500;
+        // controls.maxPolarAngle = Math.PI / 2;
+    }
+    //初始地图
+    function initMap() {
+        //加载地面
+        initFloor();
+        //围墙
+        var bigWallMaterial = new THREE.MeshBasicMaterial({color:0xafc0ca});
+        var bigWall = createWall(1000,100,5,bigWallMaterial);
+        //左边围墙
+        var bigLeftWall = bigWall.clone();
+        bigLeftWall.rotation.y = Math.PI*0.5;
+        bigLeftWall.position.set(-500,50,0);
+        scene.add(bigLeftWall);
+        //右边围墙
+        var bigRightWall = bigWall.clone();
+        bigRightWall.rotation.y = Math.PI*0.5;
+        bigRightWall.position.set(500,50,0);
+        scene.add(bigRightWall);
+        //上面的围墙
+        var bigTopWall = bigWall.clone();
+        bigTopWall.position.set(0,50,-500);
+        scene.add(bigTopWall);
+        //下面的围墙
+        var bigBottomWall = bigWall.clone();
+        bigBottomWall.position.set(0,50,500);
+        scene.add(bigBottomWall);
+
+        initBedRoom();
+    }
+    function initBedRoom() {
+        var bedRoomMaterial = new THREE.MeshBasicMaterial({color:0xc75450});
+        var bedRoomMaterial2 = new THREE.MeshBasicMaterial({color:0xc75450});
+        var bedRoomLeft = createWall(300,100,5,bedRoomMaterial2);
+        bedRoomLeft.position.set(-200,50,-350);
+        bedRoomLeft.rotation.y = Math.PI*0.5;
+        scene.add(bedRoomLeft);
+        var bedRoomBottom = createWall(170,100,5,bedRoomMaterial,'卧室');
+        bedRoomBottom.position.set(-410,50,-200);
+        drawCanvas({
+            width:300,
+            height:150,
+            text:'text',
+            bgColor:'#c75450'
+        },bedRoomMaterial);
+        scene.add(bedRoomBottom);
+    }
+    //初始化地面
+    function initFloor() {
+        // 地面
+        var floorTexture = new THREE.ImageUtils.loadTexture( '../demo/images/floor.jpg' );
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set( 10, 10 );
+        var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
+        var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+        var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.position.y = -0.5;
+        floor.rotation.x = Math.PI / 2;
+        scene.add(floor);
+    }
+
+
+    function animate() {
+        requestAnimationFrame(animate);
+        render();
+    }
+    function render() {
+        renderer.render(scene,camera);
+    }
+    initThree();
+    initMap();
+    animate();
+
+
+
+    function createWall(width,height,depth,material,text) {
+        var geometry = new THREE.BoxGeometry(width,height,depth);
+        // for (var i = 0; i < geometry.vertices.length; i++)
+        // {
+        //     var spritey = makeTextSprite( " " + text + " ", { fontsize: 32, backgroundColor: {r:255, g:100, b:100, a:1} } );
+        //     console.log(geometry.vertices[i].clone().multiplyScalar(1.1));
+        //     // spritey.position = geometry.vertices[i].clone().multiplyScalar(1.1);
+        //     scene.add( spritey );
+        // }
+        var cube = new THREE.Mesh(geometry,material);
+        return cube;
+    }
+
+    function drawCanvas(options,material) {
+        var drawingCanvas = document.createElement("canvas");
+        var drawingContext = drawingCanvas.getContext( '2d' );
+        drawingContext.fillStyle = '#FFFFFF';
+        drawingContext.fillRect( 0, 0, options.width, options.height );
+        drawingContext.font = "60px Verdana";
+        drawingContext.fillStyle = options.bgColor;
+        drawingContext.fillText('卧室', 50, options.height/2 ,options.width);
+        // set canvas as material.map (this could be done to any map, bump, displacement etc.)
+        material.map = new THREE.CanvasTexture( drawingCanvas );
+
+        // let canvas = document.createElement("canvas");
+        // canvas.width = options.width;
+        // canvas.height = options.height;
+        // let ctx = canvas.getContext("2d");
+        // ctx.fillStyle = '#FFFFFF';
+        // ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // ctx.font = "60px Verdana";
+        // // ctx.fillStyle = options.fColor;
+        // ctx.fillText('sssssss', 0, 56, 20);
+        // material.map = new THREE.CanvasTexture( canvas );
+    }
+    function makeTextSprite( message, parameters )
+    {
+        if ( parameters === undefined ) parameters = {};
+
+        var fontface = parameters.hasOwnProperty("fontface") ?
+            parameters["fontface"] : "Arial";
+
+        var fontsize = parameters.hasOwnProperty("fontsize") ?
+            parameters["fontsize"] : 18;
+
+        var borderThickness = parameters.hasOwnProperty("borderThickness") ?
+            parameters["borderThickness"] : 4;
+
+        var borderColor = parameters.hasOwnProperty("borderColor") ?
+            parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+
+        var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
+            parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+
+        // var spriteAlignment = THREE.SpriteAlignment.topLeft;
+
+        var canvas = document.createElement('canvas');
+        canvas.width = parameters.width || 100;
+        canvas.height = parameters.height || 100;
+        var context = canvas.getContext('2d');
+        context.font = "Bold " + fontsize + "px " + fontface;
+
+        // get size data (height depends only on font size)
+        var metrics = context.measureText( message );
+        var textWidth = metrics.width;
+
+        // background color
+        context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
+            + backgroundColor.b + "," + backgroundColor.a + ")";
+        // border color
+        context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
+            + borderColor.b + "," + borderColor.a + ")";
+
+        context.lineWidth = borderThickness;
+        roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
+        // 1.4 is extra height factor for text below baseline: g,j,p,q.
+
+        // text color
+        context.fillStyle = "rgba(0, 0, 0, 1.0)";
+        context.fillText( message, borderThickness, fontsize + borderThickness);
+        // canvas contents will be used for a texture
+        var texture = new THREE.Texture(canvas)
+        texture.needsUpdate = true;
+
+        var spriteMaterial = new THREE.SpriteMaterial(
+            { map: texture, useScreenCoordinates: false,  } );
+        var sprite = new THREE.Sprite( spriteMaterial );
+        sprite.scale.set(300,350,1.0);
+        return sprite;
+    }
+    function roundRect(ctx, x, y, w, h, r)
+    {
+        ctx.beginPath();
+        ctx.moveTo(x+r, y);
+        ctx.lineTo(x+w-r, y);
+        ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+        ctx.lineTo(x+w, y+h-r);
+        ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+        ctx.lineTo(x+r, y+h);
+        ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+        ctx.lineTo(x, y+r);
+        ctx.quadraticCurveTo(x, y, x+r, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+
+</script>
+</html>

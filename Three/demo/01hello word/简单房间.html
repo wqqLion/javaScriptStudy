@@ -12,7 +12,8 @@
 <script src="../js/ThreeBSP.js"></script>
 <script src="../js/Detector.js"></script>
 <script src="../js/Stats.js"></script>
-
+<script src="../js/ColladaLoader.js"></script>
+<script src="../js/GLTFLoader.js"></script>
 <script src="../js/THREEx.FullScreen.js"></script>
 <script src="../js/THREEx.KeyborderdState.js"></script>
 <script src="../js/THREEx.WindowREsize.js"></script>
@@ -28,6 +29,7 @@
     var matArrayA = [];//内墙
     var matArrayB = [];//外墙
     var dummy = new THREE.Object3D();//仿制品
+    var mesh ,mixer;
     init();
     animate();
     function initScene() {
@@ -38,7 +40,8 @@
     }
     function initCamera() {
         camera = new THREE.PerspectiveCamera(VIEW_ANGLE,ASPECT,NEAR,FAR);
-        camera.position.set(0,1000,1800);
+        // camera.position.set(0,1000,1800);
+        camera.position.set(200, 500, 800); //设置相机位置
         camera.lookAt(0,0,0);
         scene.add(camera);
     }
@@ -254,11 +257,36 @@
         spritey.position.set(155,405,-500);
         scene.add( spritey );
     }
-
+    var curve;
     function initObject() {
         createWallMaterail();
         createFloor();
         createLayout();
+
+        // 创建一个设置重复纹理的管道
+        curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-580,0,60),
+                new THREE.Vector3(70,0,60),
+                new THREE.Vector3(70,0,360),
+                new THREE.Vector3(470,0,360),
+                new THREE.Vector3(470,0,200),
+            ],
+            false //是否闭合
+        );
+
+        var tubGeometry = new THREE.TubeGeometry(curve,100,0.6,50,false);
+        var textureLoader = new THREE.TextureLoader();
+        var texture = textureLoader.load('../images/crate.gif');
+
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.x = 20;
+        var tubeMaterial = new THREE.MeshPhongMaterial({
+            map:texture,
+            transparent:true
+        });
+        var tube = new THREE.Mesh(tubGeometry,tubeMaterial);
+
+        scene.add(tube);
     }
 
     function init() {
@@ -269,6 +297,7 @@
         initLight();
         initEvent();
         initObject();
+        initModel();
         //监听键盘按键
         document.addEventListener("keydown", onkeyDown, false);
     }
@@ -291,13 +320,72 @@
                 break;
         }
     }
+    var progress = 0;
+    var moveObject ;
     function animate() {
         requestAnimationFrame(animate);
+
+        if(moveObject){
+            progress += 0.0009;
+            let point = curve.getPoint(progress);
+                if(point&&point.x){
+                    moveObject.scene.position.set(point.x,point.y,point.z);
+                }
+        }
+
+        var mixerUpdateDelta = clock.getDelta();
+        if(mixer){
+            mixer.update( mixerUpdateDelta );
+        }
+
+        // Update all the animation frames
+        // for ( var i = 0; i < mixers.length; ++ i ) {
+        //     mixers[ i ].update( mixerUpdateDelta );
+        // }
+
         renderer.render(scene,camera);
     }
 
+    function initModel() {
+        //创建collada加载器
+        var loader = new THREE.GLTFLoader();
+        loader.load('../../examples/models/gltf/Soldier.glb',function (gltf) {
+            moveObject = gltf;
+            gltf.scene.scale.set(50,50,50);
+            gltf.scene.position.set(-580,0,60);
+            var clonedScene = gltf.scene;
+            var clonedMesh = clonedScene.getObjectByName('vanguard_Mesh');
+            // console.log(gltf.animations)
+            // var mixer = startAnimation( clonedMesh, gltf.animations, 'Walk' );
+            mixer = new THREE.AnimationMixer( clonedMesh );
+            var clip = THREE.AnimationClip.findByName( gltf.animations, 'Walk' );
+            if ( clip ) {
+                var action = mixer.clipAction( clip );
+                action.play();
+            }
+            clonedScene.rotation.y = Math.PI*1.2;
+            scene.add(clonedScene);
+        })
+        // console.log(loader2)
+        // var loader = new THREE.ColladaLoader();
+        // loader.load('../js/models/collada/elf.dae', function (collada) {
+        //     moveObject = collada;
+        //
+        //     //添加阴影
+        //     collada.scene.traverse(function (item) {
+        //         if(item instanceof THREE.Mesh){
+        //             item.castShadow = true;
+        //             item.receiveShadow = true;
+        //         }
+        //     });
+        //     //缩放
+        //     collada.scene.scale.set(20,20,20);
+        //     collada.scene.position.set(-580,0,60);
+        //     scene.add(collada.scene);
+        // });
+    }
     //创建canvas对象
-    function createSprite(options) {
+    function createSprite(options,material) {
         let canvas = document.createElement("canvas");
         canvas.width = options.width;
         canvas.height = options.height;

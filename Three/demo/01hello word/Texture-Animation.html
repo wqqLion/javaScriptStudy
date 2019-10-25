@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="ThreeJS" style="position: absolute; left:0px; top:0px"></div>
+</body>
+<script src="../js/three108.js"></script>
+<script src="../js/Detector.js"></script>
+<script src="../js/Stats.js"></script>
+<script src="../js/OrbitControls.js"></script>
+<script src="../js/THREEx.KeyborderdState.js"></script>
+<script src="../js/THREEx.FullScreen.js"></script>
+<script src="../js/THREEx.WindowREsize.js"></script>
+<script src="test.js"></script>
+<script>
+    var container, scene, camera, renderer, controls, stats;
+    var keyboard = new THREEx.KeyboardState();
+    var clock = new THREE.Clock();
+
+    var annie,boomer;
+
+    function init(){
+        scene = new THREE.Scene();
+        var SCREEN_WIDTH = window.innerWidth,
+            SCREEN_HEIGHT = window.innerHeight;
+
+        var VIEW_ANGLE = 45,ASPECT= SCREEN_WIDTH/SCREEN_HEIGHT,
+            NER = 0.1,FER=20000;
+    }
+</script>
+</html>
